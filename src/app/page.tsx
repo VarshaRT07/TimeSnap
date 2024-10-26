@@ -11,14 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getRandomTask, getRandomTime } from "@/lib/data";
+import { getRandomTask } from "@/lib/data";
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { format } from "date-fns";
@@ -33,6 +30,7 @@ import {
 import { useEffect, useState } from "react";
 import { DatePicker } from "./components/DatePicker";
 import { TimePicker } from "./components/TimePicker";
+
 interface Task {
   id: number;
   login: string;
@@ -139,30 +137,29 @@ export default function Home() {
   };
 
   const handleGenerateRandom = () => {
-    const generatedTasks = [];
-    let currentLoginTime = getRandomTime(9, 10);
+    setData([]);
+    const generatedTasks: Task[] = [];
 
-    for (let i = 0; i < 10; i++) {
-      const nextLogoutTime = getRandomTime(
-        parseInt(currentLoginTime.split(":")[0]) + 1,
-        19
-      );
+    for (let i = 0, loginHour = 9; i < 10 && loginHour < 19; i++, loginHour++) {
+      const loginTime = `${loginHour < 10 ? "0" + loginHour : loginHour}:00`;
+      const logoutHour = loginHour + 1;
+      const logoutTime = `${
+        logoutHour < 10 ? "0" + logoutHour : logoutHour
+      }:00`;
 
       generatedTasks.push({
         id: data.length + i + 1,
-        login: currentLoginTime,
-        logout: nextLogoutTime,
-        duration: calculateDuration(currentLoginTime, nextLogoutTime),
+        login: loginTime,
+        logout: logoutTime,
+        duration: calculateDuration(loginTime, logoutTime),
         task: getRandomTask(),
       });
-
-      currentLoginTime = nextLogoutTime;
     }
 
-    setData(generatedTasks);
-    console.log(data);
+    setData((prevData) => [...prevData, ...generatedTasks]);
     setTotalHours(calculateTotalHours());
   };
+
   useEffect(() => {
     setTotalHours(calculateTotalHours());
   }, [data]);
@@ -268,13 +265,11 @@ export default function Home() {
       },
     },
   ];
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
   });
 
   return (
